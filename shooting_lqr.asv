@@ -1,0 +1,51 @@
+clear all
+A=[1 1;0 1];
+B=[0;1];
+Q=eye(2);
+Qf=2*eye(2);
+R=1;
+
+x1=[1;1];x2=[2;1];x3=[3;1];
+x=[x1 x2 x3];
+u=[0 0];
+Jcalc(x,u);
+N=3;
+
+x=rollout(x1,u);
+lambda=zeros(2,N);
+lambda(:,N)=Qf*x(:,N);
+for i=N-1:-1:1
+    lambda(:,i)=Q*x(:,i)+A'*lambda(:,i+1);
+    delta_u(:,i)= -(u(:,i)+R^-1*B'*lambda(:,i+1));
+end
+
+u_new= u+delta_u;
+x_new= rollout(x1,u_new);
+Jcalc(x,u)
+alfa=1;
+while Jcalc(x,u)<Jcalc(x_new,alfa*u_new)
+    alfa=alfa*0.5;
+    x_new=rollout(x1,alfa*u_new);
+    
+end
+u=u_new*alfa
+Jcalc(x_new,alfa*u_new)
+function xnew=rollout(x0,u)
+    xnew= x0;
+    A=[1 1;0 1];
+    B=[0;1];
+    for i=1:length(u)
+        xnew(:,i+1)=A*xnew(:,i)+B*u(i);
+    end
+end
+
+function J=Jcalc(x,u)
+    J=0;    
+    Q=eye(2);
+    Qf=2*eye(2);
+    R=1;
+    for i=1:length(x)-1
+        J=J+x(:,i)'*Q*x(:,i) + u(:,i)'*R*u(:,i);
+    end
+    J=x(:,end)'*Qf*x(:,end);
+end
